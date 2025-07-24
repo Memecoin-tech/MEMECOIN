@@ -91,6 +91,7 @@
                 <a href="#home" id="nav-home" class="nav-link active px-3 py-2">Home</a>
                 <a href="#recap" id="nav-recap" class="nav-link px-3 py-2">Daily Recap</a>
                 <a href="#portfolio" id="nav-portfolio" class="nav-link px-3 py-2">Portfolio</a>
+                <a href="#journal" id="nav-journal" class="nav-link px-3 py-2">Journal</a>
             </nav>
         </header>
 
@@ -156,22 +157,49 @@
                     <h3 class="text-lg font-semibold text-center text-gray-400 col-span-full" id="no-recaps-message">Loading Recaps...</h3>
                 </div>
             </div>
+
+            <!-- Journal Page -->
+            <div id="page-journal" class="page hidden">
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-center">Journal</h2>
+                    <textarea id="journal-textarea" class="w-full h-96 bg-gray-700 border border-gray-600 rounded-lg p-4 text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none" placeholder="Write your thoughts here..."></textarea>
+                    <div class="mt-4 flex justify-between items-center">
+                        <button id="prev-page-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 disabled:opacity-50" disabled>&lt; Prev</button>
+                        <span id="page-indicator" class="text-gray-400">Page 1</span>
+                        <button id="next-page-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Next &gt;</button>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button id="save-journal-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Save Journal</button>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <!-- Footer -->
     <footer class="w-full mt-12 py-8 border-t border-gray-800">
-        <div class="max-w-4xl mx-auto text-center px-4">
-            <p class="text-gray-400">Your Support Keeps Us Online. Any Amount will be Appreciated</p>
-            <div id="donation-box" class="group mt-4 bg-gray-800/50 hover:bg-gray-700/70 transition-colors duration-300 rounded-lg p-6 max-w-lg mx-auto cursor-pointer" title="Click to copy address">
-                <p class="text-gray-300 mb-2">Donate Solana</p>
-                <div id="copy-address-container" class="relative">
-                    <p id="solana-address" class="font-mono text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300 break-all">7gbYLotH2vaBaoY18mHoeUfz5q79rFxMtmUcfvezMc4Y</p>
-                    <span id="copy-feedback" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-md hidden">Copied!</span>
+        <div class="max-w-4xl mx-auto px-4 relative">
+            <div class="text-center">
+                <p class="text-gray-400">Your Support Keeps Us Online. Any Amount will be Appreciated</p>
+                <div id="donation-box" class="group mt-4 bg-gray-800/50 hover:bg-gray-700/70 transition-colors duration-300 rounded-lg p-6 max-w-lg mx-auto cursor-pointer" title="Click to copy address">
+                    <p class="text-gray-300 mb-2">Donate Solana</p>
+                    <div id="copy-address-container" class="relative">
+                        <p id="solana-address" class="font-mono text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300 break-all">7gbYLotH2vaBaoY18mHoeUfz5q79rFxMtmUcfvezMc4Y</p>
+                        <span id="copy-feedback" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-md hidden">Copied!</span>
+                    </div>
                 </div>
+            </div>
+            <!-- Socials Link -->
+            <div class="absolute bottom-0 right-4">
+                <a href="https://x.com/MemecoinTech" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-300">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
             </div>
         </div>
     </footer>
+
 
     <!-- Tooltip Element -->
     <div id="tooltip" class="hidden absolute bg-gray-600 text-white text-sm rounded-md px-2 py-1 shadow-lg"></div>
@@ -203,6 +231,8 @@
         let portfolioView = 'calendar'; // Tracks the current view in the portfolio section ('calendar' or 'graph')
         const GIST_USERNAME = 'Memecoin-tech'; // The GitHub username to fetch Gists from
         let parsedRecaps = []; // A cache for the parsed recap data from the Gist
+        let journalPages = ['']; // Array to store content for each journal page
+        let currentJournalPage = 0; // Index of the current journal page (0-based)
 
         // ===================================================================================
         // --- DOM ELEMENT REFERENCES ---
@@ -211,9 +241,11 @@
         const navHome = document.getElementById('nav-home');
         const navPortfolio = document.getElementById('nav-portfolio');
         const navRecap = document.getElementById('nav-recap');
+        const navJournal = document.getElementById('nav-journal');
         const pageHome = document.getElementById('page-home');
         const pagePortfolio = document.getElementById('page-portfolio');
         const pageRecap = document.getElementById('page-recap');
+        const pageJournal = document.getElementById('page-journal');
         
         const tradeForm = document.getElementById('trade-form');
         const coinNameInput = document.getElementById('coin-name');
@@ -251,6 +283,12 @@
         const modalRecapDate = document.getElementById('modal-recap-date');
         const modalRecapContent = document.getElementById('modal-recap-content');
         const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        const journalTextarea = document.getElementById('journal-textarea');
+        const saveJournalBtn = document.getElementById('save-journal-btn');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageIndicator = document.getElementById('page-indicator');
 
         // ===================================================================================
         // --- API & UTILITY FUNCTIONS ---
@@ -324,6 +362,40 @@
          */
         function loadTrades() { const d = localStorage.getItem('meme_coin_trades'); if(d) trades = JSON.parse(d); } // --- End of loadTrades ---
 
+        /**
+         * Saves the current page's content and the entire journal to localStorage.
+         * @function saveJournal
+         */
+        function saveJournal() {
+            journalPages[currentJournalPage] = journalTextarea.value;
+            localStorage.setItem('trading_journal', JSON.stringify(journalPages));
+            
+            saveJournalBtn.textContent = 'Saved!';
+            saveJournalBtn.classList.remove('bg-cyan-600', 'hover:bg-cyan-700');
+            saveJournalBtn.classList.add('bg-green-600');
+            setTimeout(() => {
+                saveJournalBtn.textContent = 'Save Journal';
+                saveJournalBtn.classList.remove('bg-green-600');
+                saveJournalBtn.classList.add('bg-cyan-600', 'hover:bg-cyan-700');
+            }, 1500);
+        }
+
+        /**
+         * Loads the journal pages from localStorage.
+         * @function loadJournal
+         */
+        function loadJournal() {
+            const content = localStorage.getItem('trading_journal');
+            if (content) {
+                journalPages = JSON.parse(content);
+                if (!Array.isArray(journalPages) || journalPages.length === 0) {
+                    journalPages = [''];
+                }
+            } else {
+                journalPages = [''];
+            }
+        }
+
         // ===================================================================================
         // --- PAGE NAVIGATION ---
         // Logic for switching between the different pages of the application.
@@ -339,10 +411,12 @@
             pageHome.classList.toggle('hidden', page !== 'home');
             pagePortfolio.classList.toggle('hidden', page !== 'portfolio');
             pageRecap.classList.toggle('hidden', page !== 'recap');
+            pageJournal.classList.toggle('hidden', page !== 'journal');
             
             navHome.classList.toggle('active', page === 'home');
             navPortfolio.classList.toggle('active', page === 'portfolio');
             navRecap.classList.toggle('active', page === 'recap');
+            navJournal.classList.toggle('active', page === 'journal');
 
             if (page === 'portfolio') updatePortfolioView();
             if (page === 'recap') fetchAndRenderRecaps();
@@ -717,6 +791,42 @@
         function closeRecapModal() {
             recapModal.classList.add('hidden');
         } // --- End of closeRecapModal ---
+
+        /**
+         * Displays the content of the current journal page.
+         * @function displayJournalPage
+         */
+        function displayJournalPage() {
+            journalTextarea.value = journalPages[currentJournalPage] || '';
+            pageIndicator.textContent = `Page ${currentJournalPage + 1}`;
+            prevPageBtn.disabled = currentJournalPage === 0;
+            prevPageBtn.classList.toggle('opacity-50', currentJournalPage === 0);
+        }
+
+        /**
+         * Handles clicking the 'Next Page' button.
+         * @function handleNextPage
+         */
+        function handleNextPage() {
+            journalPages[currentJournalPage] = journalTextarea.value;
+            currentJournalPage++;
+            if (currentJournalPage >= journalPages.length) {
+                journalPages.push('');
+            }
+            displayJournalPage();
+        }
+
+        /**
+         * Handles clicking the 'Previous Page' button.
+         * @function handlePrevPage
+         */
+        function handlePrevPage() {
+            if (currentJournalPage > 0) {
+                journalPages[currentJournalPage] = journalTextarea.value;
+                currentJournalPage--;
+                displayJournalPage();
+            }
+        }
         
         // ===================================================================================
         // --- EVENT LISTENERS ---
@@ -727,6 +837,7 @@
         navHome.addEventListener('click', () => navigate('home'));
         navPortfolio.addEventListener('click', () => navigate('portfolio'));
         navRecap.addEventListener('click', () => navigate('recap'));
+        navJournal.addEventListener('click', () => navigate('journal'));
         
         // Home Page
         currencyToggleBtn.addEventListener('click', toggleCurrency);
@@ -770,6 +881,11 @@
         // Modal
         modalCloseBtn.addEventListener('click', closeRecapModal);
         
+        // Journal Page
+        saveJournalBtn.addEventListener('click', saveJournal);
+        prevPageBtn.addEventListener('click', handlePrevPage);
+        nextPageBtn.addEventListener('click', handleNextPage);
+
         // ===================================================================================
         // --- FOOTER LOGIC ---
         // Handles the copy-to-clipboard functionality for the donation address.
@@ -847,6 +963,8 @@
         function init() {
             loadTrades();
             renderTrades();
+            loadJournal();
+            displayJournalPage();
             navigate('home');
             fetchSolPrice(); // Initial fetch
             setInterval(fetchSolPrice, 30000); // Fetch every 30 seconds
@@ -857,3 +975,4 @@
     </script>
 </body>
 </html>
+
